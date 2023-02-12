@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-type TranslationDelivered struct {
-	Timestamp Timestamp `json:"timestamp"`
-	Duration  float64   `json:"duration"`
-}
-
 type Timestamp struct {
 	time.Time
 }
@@ -26,4 +21,19 @@ func (ts *Timestamp) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	return nil
+}
+
+type TranslationDelivered struct {
+	Timestamp Timestamp `json:"timestamp"`
+	Duration  float64   `json:"duration"`
+}
+
+// GetTranslationDeliveredFromBytes return the TranslationDelivered from json bytes
+func GetTranslationDeliveredFromBytes(b []byte) (TranslationDelivered, error) {
+	var td TranslationDelivered
+	err := json.Unmarshal(b, &td)
+	if err != nil {
+		return td, err
+	}
+	return td, nil
 }
