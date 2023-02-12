@@ -15,7 +15,7 @@ func NewTreeBabel(JSONfile string, wSize uint64) (TreeBabel, error) {
 		return app, fmt.Errorf("window size must be grather than zero")
 	}
 
-	app.TranslationDeliveredFile = JSONfile
+	app.EventsFile = JSONfile
 	app.WindowSize = wSize
 	return app, nil
 }

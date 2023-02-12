@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/edualb-challenge/treebabel/internal/apps"
@@ -19,8 +21,16 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = app.Run()
+	avgDeliveryTime, err := app.Run()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	for _, adt := range avgDeliveryTime {
+		b, err := json.Marshal(adt)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s\n", b)
 	}
 }

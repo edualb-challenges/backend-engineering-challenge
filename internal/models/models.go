@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -23,17 +24,27 @@ func (ts *Timestamp) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-type TranslationDelivered struct {
+func (ts Timestamp) MarshalJSON() ([]byte, error) {
+	stamp := fmt.Sprintf("\"%s\"", ts.Format("2006-01-02 15:04:05"))
+	return []byte(stamp), nil
+}
+
+type Event struct {
 	Timestamp Timestamp `json:"timestamp"`
 	Duration  float64   `json:"duration"`
 }
 
-// GetTranslationDeliveredFromBytes return the TranslationDelivered from json bytes
-func GetTranslationDeliveredFromBytes(b []byte) (TranslationDelivered, error) {
-	var td TranslationDelivered
-	err := json.Unmarshal(b, &td)
+// GetEventFromBytes return the Event from json bytes
+func GetEventFromBytes(b []byte) (Event, error) {
+	var e Event
+	err := json.Unmarshal(b, &e)
 	if err != nil {
-		return td, err
+		return e, err
 	}
-	return td, nil
+	return e, nil
+}
+
+type AverageDeliveryTime struct {
+	Date    Timestamp `json:"date"`
+	Average float64   `json:"average_delivery_time"`
 }

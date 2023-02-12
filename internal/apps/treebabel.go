@@ -1,21 +1,54 @@
 package apps
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/edualb-challenge/treebabel/internal/iofiles"
 	"github.com/edualb-challenge/treebabel/internal/models"
+	"github.com/edualb-challenge/treebabel/internal/tree"
 )
 
 // TreeBabel is an application responsible to process the average delivery time
 type TreeBabel struct {
-	TranslationDeliveredFile string
-	WindowSize               uint64
+	EventsFile string
+	WindowSize uint64
+
+	firstTreeTime time.Time
+	lastTreeTime  time.Time
+	leaves        []float64
+	timeLeafMap   map[time.Time]int64
 }
 
-// Run executes the treebabel application
-func (app TreeBabel) Run() error {
+// Run executes the treebabel application returning the average delivery time segment
+func (app TreeBabel) Run() ([]models.AverageDeliveryTime, error) {
+	err := app.setRangeOfTimes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = app.setLeaves()
+	if err != nil {
+		return nil, err
+	}
+
+	segTree := tree.NewSegment(app.leaves)
+	err = app.buildTree(segTree)
+	if err != nil {
+		return nil, err
+	}
+
+	avarageDeliveryTimeSegment, err := app.getAverageDeliveryTime(segTree)
+	if err != nil {
+		return nil, err
+	}
+
+	return avarageDeliveryTimeSegment, nil
+}
+
+func (app *TreeBabel) setRangeOfTimes() error {
 	firstTreeTime, err := app.getFirstTreeTime()
 	if err != nil {
 		return err
@@ -26,36 +59,36 @@ func (app TreeBabel) Run() error {
 		return err
 	}
 
-	leavesQty := int(lastTreeTime.Sub(firstTreeTime).Minutes())
-
-	leaves := make([]float64, leavesQty)
-	leafTimeMap := make(map[int]time.Time, leavesQty)
-
-	for i := range leaves {
-		leafTimeMap[i] = firstTreeTime.Add(time.Duration(i) * time.Minute)
-	}
-
-	for i := range leaves {
-		t, ok := leafTimeMap[i]
-		if !ok {
-			return fmt.Errorf("invalid index of %d", i)
-		}
-		fmt.Printf("time in %d size: %v\n", i, t)
-	}
-
-	fmt.Printf("leaves size: %d\n\n", len(leaves))
-
+	app.firstTreeTime = firstTreeTime
+	app.lastTreeTime = lastTreeTime
 	return nil
+}
+
+func (app TreeBabel) getFirstTreeTime() (time.Time, error) {
+	var firstTime time.Time
+	firstLine, err := iofiles.GetFirstLine(app.EventsFile)
+	if err != nil {
+		return firstTime, err
+	}
+
+	firstTD, err := models.GetEventFromBytes(firstLine)
+	if err != nil {
+		return firstTime, err
+	}
+	firstTimestamp := firstTD.Timestamp
+	firstTime = time.Date(firstTimestamp.Year(), firstTimestamp.Month(), firstTimestamp.Day(), firstTimestamp.Hour(), firstTimestamp.Minute()-int(app.WindowSize), 0, 0, firstTimestamp.Location())
+
+	return firstTime, nil
 }
 
 func (app TreeBabel) getLastTreeTime() (time.Time, error) {
 	var lastTime time.Time
-	lastLine, err := iofiles.GetLastLine(app.TranslationDeliveredFile)
+	lastLine, err := iofiles.GetLastLine(app.EventsFile)
 	if err != nil {
 		return lastTime, err
 	}
 
-	lastTD, err := models.GetTranslationDeliveredFromBytes(lastLine)
+	lastTD, err := models.GetEventFromBytes(lastLine)
 	if err != nil {
 		return lastTime, nil
 	}
@@ -71,19 +104,85 @@ func (app TreeBabel) getLastTreeTime() (time.Time, error) {
 	return lastTime, nil
 }
 
-func (app TreeBabel) getFirstTreeTime() (time.Time, error) {
-	var firstTime time.Time
-	firstLine, err := iofiles.GetFirstLine(app.TranslationDeliveredFile)
-	if err != nil {
-		return firstTime, err
+func (app *TreeBabel) setLeaves() error {
+	leavesQty := int(app.lastTreeTime.Sub(app.firstTreeTime).Minutes()) + 1
+	leaves := make([]float64, leavesQty)
+	timeLeafMap := make(map[time.Time]int64, leavesQty)
+
+	for i := range leaves {
+		timeLeafMap[app.firstTreeTime.Add(time.Duration(i)*time.Minute)] = int64(i)
 	}
 
-	firstTD, err := models.GetTranslationDeliveredFromBytes(firstLine)
-	if err != nil {
-		return firstTime, err
-	}
-	firstTimestamp := firstTD.Timestamp
-	firstTime = time.Date(firstTimestamp.Year(), firstTimestamp.Month(), firstTimestamp.Day(), firstTimestamp.Hour(), firstTimestamp.Minute()-int(app.WindowSize), 0, 0, firstTimestamp.Location())
+	app.leaves = leaves
+	app.timeLeafMap = timeLeafMap
 
-	return firstTime, nil
+	return nil
+}
+
+func (app TreeBabel) buildTree(segTree *tree.Segment) error {
+	file, err := os.Open(app.EventsFile)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		event, err := models.GetEventFromBytes(scanner.Bytes())
+		if err != nil {
+			return err
+		}
+
+		timestamp := event.Timestamp
+
+		minute := timestamp.Minute()
+		if timestamp.Second() > 0 {
+			minute += 1
+		}
+
+		eventTime := time.Date(timestamp.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), minute, 0, 0, timestamp.Location())
+
+		index, ok := app.timeLeafMap[eventTime]
+		if !ok {
+			return fmt.Errorf("time '%v' is not valid", eventTime.Format("2006-12-26 18:11:08"))
+		}
+		segTree.Set(index, event.Duration)
+	}
+	return nil
+}
+
+func (app TreeBabel) getAverageDeliveryTime(segTree *tree.Segment) ([]models.AverageDeliveryTime, error) {
+	averageDeliveryTime := []models.AverageDeliveryTime{}
+
+	lastIndex, ok := app.timeLeafMap[app.lastTreeTime]
+	if !ok {
+		return nil, fmt.Errorf("failing getting the last time index for '%s", app.lastTreeTime.Format("2006-12-26 18:11:08"))
+	}
+
+	beginsTime := app.firstTreeTime.Add(time.Duration(app.WindowSize) * time.Minute)
+	beginsAt, ok := app.timeLeafMap[app.firstTreeTime.Add(time.Duration(app.WindowSize)*time.Minute)]
+	if !ok {
+		return nil, fmt.Errorf("failing getting the last time index for '%s", app.firstTreeTime)
+	}
+
+	for i := 0; int(i) < len(app.leaves); i++ {
+		index := int64(i)
+		nextIndex := beginsAt + int64(i)
+
+		if nextIndex-1 >= lastIndex {
+			break
+		}
+
+		avg := segTree.Query(index, nextIndex)
+		indexTime := beginsTime.Add(time.Duration(index) * time.Minute)
+
+		var adt models.AverageDeliveryTime
+		adt.Average = avg
+		adt.Date = models.Timestamp{
+			Time: indexTime,
+		}
+		averageDeliveryTime = append(averageDeliveryTime, adt)
+	}
+	return averageDeliveryTime, nil
 }
