@@ -5,9 +5,21 @@
 ## Technologies
 
 - Go v1.20
-- Docker (optional)
+- Docker
 
 ## Running the application
+
+
+
+*If you don't have `make` installed in your machine run Docker by your terminal directly:*
+
+```bash
+# building docker image
+$ docker build -f ./build/package/treebabel/Dockerfile . -t treebabel:latest
+
+# running image and entering in the container
+$ docker run -it treebabel:latest bash
+```
 
 ## Code Organization
 - I am following the [Standard Go Project Layout](https://github.com/golang-standards/project-layout)
@@ -17,6 +29,7 @@
 - **Message errors**: Sometimes the message error is not so useful. I would like to put more context in the possible errors messages.
 - **Debugging logs**: In this application there is no `debug` or `verbose` flag and would be useful if the application have it.
 - **Concurrency**: In this application is not using concurrency to improve the processing, we could use that.
+- **Graceful Shutdown**: There isn't a graceful shutdown in this application.
 
 # treebabel Algorithm 🌲
 
