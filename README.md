@@ -9,7 +9,7 @@
 
 ## Running the application
 
-
+[![asciicast](https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0.svg)](https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0)
 
 *If you don't have `make` installed in your machine run Docker by your terminal directly:*
 
