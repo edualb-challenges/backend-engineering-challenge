@@ -1,6 +1,6 @@
 package tree
 
-func NewSegment(vector []float64, defaultValue float64) *Segment {
+func NewSegment(vector []float64) *Segment {
 	tree := &Segment{}
 
 	// preparing leaves. It needs to be a exponecial of two.
@@ -11,9 +11,8 @@ func NewSegment(vector []float64, defaultValue float64) *Segment {
 
 	// building tree (with on more exponencial of two) and set all values as default value
 	for i := 0; i < 2*n; i++ {
-		tree.Seg = append(tree.Seg, defaultValue)
+		tree.Seg = append(tree.Seg, 0)
 	}
-	tree.DefaultValue = defaultValue
 	tree.Size = int64(n)
 	return tree
 }

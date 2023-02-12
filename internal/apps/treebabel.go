@@ -27,8 +27,24 @@ func (app TreeBabel) Run() error {
 	}
 
 	leavesQty := int(lastTreeTime.Sub(firstTreeTime).Minutes())
+
 	leaves := make([]float64, leavesQty)
-	fmt.Printf("leaves size: %d\n", len(leaves))
+	leafTimeMap := make(map[int]time.Time, leavesQty)
+
+	for i := range leaves {
+		leafTimeMap[i] = firstTreeTime.Add(time.Duration(i) * time.Minute)
+	}
+
+	for i := range leaves {
+		t, ok := leafTimeMap[i]
+		if !ok {
+			return fmt.Errorf("invalid index of %d", i)
+		}
+		fmt.Printf("time in %d size: %v\n", i, t)
+	}
+
+	fmt.Printf("leaves size: %d\n\n", len(leaves))
+
 	return nil
 }
 
