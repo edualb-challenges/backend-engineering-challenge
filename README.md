@@ -44,9 +44,9 @@ In order to calculate the moving average from the input, I am using the [Segment
 
 In order to facilitate our problem, we will use as example the following input:
 
-### **window_size**: 2
+#### **window_size**: 2
 
-### **input_file**:
+#### **input_file**:
 ```json
 {"timestamp": "2018-12-26 18:10:40.509645","translation_id": "5aa5b2f39f7254a75aa5","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 10}
 {"timestamp": "2018-12-26 18:11:08.509654","translation_id": "5aa5b2f39f7254a75aa5","source_language": "en","target_language": "fr","client_name": "airliberty","event_name": "translation_delivered","nr_words": 30, "duration": 15}
@@ -55,7 +55,7 @@ In order to facilitate our problem, we will use as example the following input:
 {"timestamp": "2018-12-26 18:15:25.961395","translation_id": "5aa5b2f39f7254a75bb3","source_language": "en","target_language": "fr","client_name": "taxi-eats","event_name": "translation_delivered","nr_words": 100, "duration": 31}
 ```
 
-output:
+#### **output**:
 
 ```bash
 root@b9c92981f947:/unbabel-data $ treebabel --input_file ./complex.json --window_size 2
