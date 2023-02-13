@@ -11,5 +11,5 @@ FROM debian:bullseye AS FINAL
 
 COPY --from=BUILDER /app/bin/treebabel /usr/local/bin
 
-WORKDIR /unababel-data
-COPY --from=BUILDER /app/testdata/treebabel/* /unababel-data/
+WORKDIR /unbabel-data
+COPY --from=BUILDER /app/testdata/treebabel/* /unbabel-data/

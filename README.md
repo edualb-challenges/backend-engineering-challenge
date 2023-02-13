@@ -8,8 +8,9 @@
 - Docker
 
 ## Running the application
-
-[![asciicast](https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0.svg)](https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0)
+<div align="center">
+    <a href="https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0" target="_blank"><img src="https://asciinema.org/a/BWlIWQFHSTixRpYbCVOo2HER0.svg" width="550" /></a>
+</div>
 
 *If you don't have `make` installed in your machine run Docker by your terminal directly:*
 
@@ -19,6 +20,12 @@ $ docker build -f ./build/package/treebabel/Dockerfile . -t treebabel:latest
 
 # running image and entering in the container
 $ docker run -it treebabel:latest bash
+```
+
+*Or in case you have just Go installed in your machine, execute the program directly:*
+
+```bash
+$ go run ./cmd/treebabel/main.go --input_file ./testdata/treebabel/challenge-input.json --window_size 10
 ```
 
 ## Code Organization
